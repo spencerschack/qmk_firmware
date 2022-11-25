@@ -30,6 +30,10 @@ enum layers {
     UTL
 };
 
+enum custom_keycodes {
+    KC_MSSC = SAFE_RANGE,
+};
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BAS] = LAYOUT(
         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,         KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
@@ -52,7 +56,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TO(BAS), TO(BAS), KC_BTN2, KC_BTN1, TO(BAS),      TO(BAS), KC_BTN1, KC_BTN2, TO(BAS), TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
-                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                  TO(BAS),
+                 TO(BAS), KC_MSSC, TO(BAS), TO(BAS),      TO(BAS),                  TO(BAS),
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
     ),
     [UTL] = LAYOUT(
@@ -65,11 +69,30 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
+bool set_scrolling = false;
+
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static report_mouse_t last;
-    if (last && has_mouse_report_changed(&mouse_report, &last)) {
+    static bool init = false;
+    if (init && has_mouse_report_changed(&mouse_report, &last) && !layer_state_is(MOU)) {
+        set_scrolling = false;
         layer_on(MOU);
     }
+    init = true;
     last = mouse_report;
+    if (set_scrolling) {
+        mouse_report.h = mouse_report.x;
+        mouse_report.v = mouse_report.y;
+        mouse_report.x = 0;
+        mouse_report.y = 0;
+    }
     return mouse_report;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == KC_MSSC && record->event.pressed) {
+        set_scrolling = !set_scrolling;
+        pointing_device_set_cpi(set_scrolling ? 100 : PMW33XX_CPI);
+    }
+    return true;
 }
