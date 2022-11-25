@@ -76,6 +76,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static bool init = false;
     if (init && has_mouse_report_changed(&mouse_report, &last) && !layer_state_is(MOU)) {
         set_scrolling = false;
+        pointing_device_set_cpi(PMW33XX_CPI);
         layer_on(MOU);
     }
     init = true;
