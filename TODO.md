@@ -1,0 +1,9 @@
+-   arrow keys
+-   scroll keys
+-   window nav
+-   transparent mods on num layer
+-   symbols
+-   add history to mouse layer
+-   screenshot key
+-   home layer fixed point
+-   go back from mouse layer and send that key too

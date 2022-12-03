@@ -32,7 +32,12 @@ enum layers {
 
 enum custom_keycodes {
     KC_MSSC = SAFE_RANGE,
+    KC_DRAG,
 };
+
+#define KC_BACK RCMD(KC_LBRC)
+#define KC_FRWD RCMD(KC_RBRC)
+#define KC_CDCL RCMD(KC_BTN1)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BAS] = LAYOUT(
@@ -45,18 +50,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [SYM] = LAYOUT(
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_7,    KC_8,    KC_9,    TO(BAS),
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_GRV,  KC_4,    KC_5,    KC_6,    TO(BAS),
+        KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, TO(BAS),      KC_DOT,  KC_4,    KC_5,    KC_6,    TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_1,    KC_2,    KC_3,    TO(BAS),
                  TO(BAS), TO(BAS),                                          KC_0,    TO(BAS),
-                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                   TO(BAS),
-                                   TO(UTL), TO(BAS),               TO(BAS), TO(BAS)
+                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                   KC_BSPC,
+                                   TO(UTL), TO(BAS),               TO(BAS), KC_ENT
     ),
     [MOU] = LAYOUT(
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
-        TO(BAS), TO(BAS), KC_BTN2, KC_BTN1, TO(BAS),      TO(BAS), KC_BTN1, KC_BTN2, TO(BAS), TO(BAS),
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_DRAG, TO(BAS), TO(BAS), TO(BAS),
+        TO(BAS), TO(BAS), KC_BTN2, KC_BTN1, TO(BAS),      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_BACK, KC_FRWD, TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
-                 TO(BAS), KC_MSSC, TO(BAS), TO(BAS),      TO(BAS),                  TO(BAS),
+                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                  TO(BAS),
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
     ),
     [UTL] = LAYOUT(
@@ -64,16 +69,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
-                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                  TO(BAS),
+                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                   TO(BAS),
                                    TO(BAS), QK_BOOT,               TO(BAS), TO(BAS)
     )
 };
 
 bool set_scrolling = false;
 
+// void keyboard_post_init_user(void) {
+//   debug_config.matrix = false;
+//   debug_config.mouse = false;
+// }
+
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static report_mouse_t last;
     static bool init = false;
+    static int16_t scroll_buffer_x = 0;
+    static int16_t scroll_buffer_y = 0;
     if (init && has_mouse_report_changed(&mouse_report, &last) && !layer_state_is(MOU)) {
         set_scrolling = false;
         pointing_device_set_cpi(PMW33XX_CPI);
@@ -82,8 +94,16 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     init = true;
     last = mouse_report;
     if (set_scrolling) {
-        mouse_report.h = mouse_report.x;
-        mouse_report.v = mouse_report.y;
+        scroll_buffer_x += mouse_report.x;
+        scroll_buffer_y += mouse_report.y;
+        if (abs(scroll_buffer_x) > 6) {
+            mouse_report.h = scroll_buffer_x > 0 ? -1 : 1;
+            scroll_buffer_x = 0;
+        }
+        if (abs(scroll_buffer_y) > 6) {
+            mouse_report.v = scroll_buffer_y > 0 ? -1 : 1;
+            scroll_buffer_y = 0;
+        }
         mouse_report.x = 0;
         mouse_report.y = 0;
     }
@@ -91,9 +111,24 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode == KC_MSSC && record->event.pressed) {
-        set_scrolling = !set_scrolling;
-        pointing_device_set_cpi(set_scrolling ? 100 : PMW33XX_CPI);
+    static bool is_dragging = false;
+    switch (keycode) {
+        case KC_DRAG:
+        if (record->event.pressed) {
+            is_dragging = !is_dragging;
+            if (is_dragging) {
+                register_code(KC_BTN1);
+            } {
+                unregister_code(KC_BTN1);
+            }
+        }
+        break;
+        case KC_MSSC:
+        if (record->event.pressed) {
+            set_scrolling = !set_scrolling;
+            pointing_device_set_cpi(set_scrolling ? 100 : PMW33XX_CPI);
+        }
+        break;
     }
     return true;
 }
