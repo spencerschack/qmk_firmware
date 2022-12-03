@@ -26,6 +26,7 @@
 enum layers {
     BAS,
     SYM,
+    NAV,
     MOU,
     UTL
 };
@@ -33,11 +34,12 @@ enum layers {
 enum custom_keycodes {
     KC_MSSC = SAFE_RANGE,
     KC_DRAG,
+    KC_APSW
 };
 
-#define KC_BACK RCMD(KC_LBRC)
-#define KC_FRWD RCMD(KC_RBRC)
-#define KC_CDCL RCMD(KC_BTN1)
+#define KC_BACK LCMD(KC_LBRC)
+#define KC_FRWD LCMD(KC_RBRC)
+#define KC_CDCL LCMD(KC_BTN1)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BAS] = LAYOUT(
@@ -45,7 +47,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_A,    KC_S,    KC_D,    KC_F,    KC_G,         KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
         KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
                  KC_LBRC, KC_MINS,                                          KC_QUOT, KC_EQL,
-                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      KC_NO,                     KC_BSPC,
+                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(NAV),                     KC_BSPC,
                                    TO(SYM), KC_ESC,                KC_TAB,  KC_ENT
     ),
     [SYM] = LAYOUT(
@@ -56,12 +58,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                  KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                   KC_BSPC,
                                    TO(UTL), TO(BAS),               TO(BAS), KC_ENT
     ),
+    [NAV] = LAYOUT(
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_DRAG, TO(BAS), TO(BAS), TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
+                 TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
+                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_APSW,                   TO(BAS),
+                                   TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
+    ),
     [MOU] = LAYOUT(
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_DRAG, TO(BAS), TO(BAS), TO(BAS),
-        TO(BAS), TO(BAS), KC_BTN2, KC_BTN1, TO(BAS),      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_BACK, KC_FRWD, TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
-                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                  TO(BAS),
+                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                   TO(BAS),
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
     ),
     [UTL] = LAYOUT(
@@ -74,7 +84,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
-bool set_scrolling = false;
+bool is_scrolling = false;
+deferred_token app_switching_token = INVALID_DEFERRED_TOKEN;
+
+uint32_t cleanup_app_switching(uint32_t trigger_time, void* cb_arg) {
+    app_switching_token = INVALID_DEFERRED_TOKEN;
+    unregister_code(KC_LCMD);
+    return 0;
+}
 
 // void keyboard_post_init_user(void) {
 //   debug_config.matrix = false;
@@ -87,13 +104,13 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static int16_t scroll_buffer_x = 0;
     static int16_t scroll_buffer_y = 0;
     if (init && has_mouse_report_changed(&mouse_report, &last) && !layer_state_is(MOU)) {
-        set_scrolling = false;
+        is_scrolling = false;
         pointing_device_set_cpi(PMW33XX_CPI);
         layer_on(MOU);
     }
     init = true;
     last = mouse_report;
-    if (set_scrolling) {
+    if (is_scrolling) {
         scroll_buffer_x += mouse_report.x;
         scroll_buffer_y += mouse_report.y;
         if (abs(scroll_buffer_x) > 6) {
@@ -125,10 +142,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         break;
         case KC_MSSC:
         if (record->event.pressed) {
-            set_scrolling = !set_scrolling;
-            pointing_device_set_cpi(set_scrolling ? 100 : PMW33XX_CPI);
+            is_scrolling = !is_scrolling;
+            pointing_device_set_cpi(is_scrolling ? 100 : PMW33XX_CPI);
         }
         break;
+        case KC_APSW:
+        if (record->event.pressed) {
+            if (app_switching_token == INVALID_DEFERRED_TOKEN) {
+                app_switching_token = defer_exec(500, cleanup_app_switching, NULL);
+            } else {
+                extend_deferred_exec(app_switching_token, 500);
+            }
+            register_code(KC_LCMD);
+            register_code(KC_TAB);
+        } else {
+            unregister_code(KC_TAB);
+        }
     }
     return true;
 }
