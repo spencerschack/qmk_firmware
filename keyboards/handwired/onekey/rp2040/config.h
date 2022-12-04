@@ -5,8 +5,6 @@
 
 #include "config_common.h"
 
-#define DEBUG_MATRIX_SCAN_RATE
-
 #define QMK_WAITING_TEST_BUSY_PIN GP28
 #define QMK_WAITING_TEST_YIELD_PIN GP29
 

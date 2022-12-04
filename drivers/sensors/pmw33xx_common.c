@@ -185,7 +185,9 @@ pmw33xx_report_t pmw33xx_read_burst(uint8_t sensor) {
     }
 
     if (!in_burst[sensor]) {
-        dprintf("PMW33XX (%d): burst\n", sensor);
+        if (debug_config.mouse) {
+          dprintf("PMW33XX (%d): burst\n", sensor);
+        }
         if (!pmw33xx_write(sensor, REG_Motion_Burst, 0x00)) {
             return report;
         }

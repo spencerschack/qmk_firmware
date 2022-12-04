@@ -329,7 +329,9 @@ report_mouse_t pmw33xx_get_report(report_mouse_t mouse_report) {
 
     if (!in_motion) {
         in_motion = true;
-        dprintf("PWM3360 (0): starting motion\n");
+        if (debug_config.mouse) {
+            dprintf("PWM3360 (0): starting motion\n");
+        }
     }
 
     mouse_report.x = CONSTRAIN_HID_XY(report.delta_x);

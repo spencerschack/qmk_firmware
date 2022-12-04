@@ -34,12 +34,12 @@ enum layers {
 enum custom_keycodes {
     KC_MSSC = SAFE_RANGE,
     KC_DRAG,
-    KC_APSW
+    KC_APSW,
+    KC_CDCL
 };
 
 #define KC_BACK LCMD(KC_LBRC)
 #define KC_FRWD LCMD(KC_RBRC)
-#define KC_CDCL LCMD(KC_BTN1)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BAS] = LAYOUT(
@@ -59,7 +59,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                    TO(UTL), TO(BAS),               TO(BAS), KC_ENT
     ),
     [NAV] = LAYOUT(
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_DRAG, TO(BAS), TO(BAS), TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
@@ -71,7 +71,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_BACK, KC_FRWD, TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
-                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS),                   TO(BAS),
+                 TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(NAV),                   TO(BAS),
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
     ),
     [UTL] = LAYOUT(
@@ -93,10 +93,10 @@ uint32_t cleanup_app_switching(uint32_t trigger_time, void* cb_arg) {
     return 0;
 }
 
-// void keyboard_post_init_user(void) {
-//   debug_config.matrix = false;
-//   debug_config.mouse = false;
-// }
+void keyboard_post_init_user(void) {
+  debug_config.matrix = false;
+  debug_config.mouse = false;
+}
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static report_mouse_t last;
@@ -130,12 +130,21 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool is_dragging = false;
     switch (keycode) {
+        case KC_CDCL:
+        if (record->event.pressed) {
+            register_code(KC_LCMD);
+        } else {
+            register_code(KC_BTN1);
+            unregister_code(KC_BTN1);
+            unregister_code(KC_LCMD);
+        }
+        break;
         case KC_DRAG:
         if (record->event.pressed) {
             is_dragging = !is_dragging;
             if (is_dragging) {
                 register_code(KC_BTN1);
-            } {
+            } else {
                 unregister_code(KC_BTN1);
             }
         }
@@ -149,9 +158,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_APSW:
         if (record->event.pressed) {
             if (app_switching_token == INVALID_DEFERRED_TOKEN) {
-                app_switching_token = defer_exec(500, cleanup_app_switching, NULL);
+                app_switching_token = defer_exec(800, cleanup_app_switching, NULL);
             } else {
-                extend_deferred_exec(app_switching_token, 500);
+                extend_deferred_exec(app_switching_token, 800);
             }
             register_code(KC_LCMD);
             register_code(KC_TAB);
