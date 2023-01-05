@@ -36,8 +36,9 @@ enum custom_keycodes {
     KC_DRAG,
     KC_CDCL,
     KC_ALCL,
-    KC_SYM,
     KC_SCST,
+    KC_APSW,
+    KC_NAV,
 };
 
 #define KC_BACK LCMD(KC_LBRC)
@@ -45,7 +46,6 @@ enum custom_keycodes {
 #define KC_WN_L LOPT(LCMD(KC_LEFT))
 #define KC_WN_R LOPT(LCMD(KC_RGHT))
 #define KC_WN_F LOPT(LCMD(KC_F))
-#define KC_NAV LM(NAV, MOD_LGUI)
 #define KC_VIM LCTL(KC_F)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -55,20 +55,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,         KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
                  KC_LBRC, KC_MINS,                                          KC_QUOT, KC_EQL,
                  KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      KC_NAV,                    KC_BSPC,
-                                   KC_SYM,  KC_ESC,                KC_TAB,  KC_ENT
+                                   MO(SYM), KC_ESC,                KC_TAB,  KC_ENT
     ),
     [SYM] = LAYOUT(
-        G(KC_LEFT), G(KC_DOWN), G(KC_UP), G(KC_RGHT), TO(BAS),      KC_GRV,  KC_7,    KC_8,    KC_9,    QK_BOOT,
-        KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VIM,       KC_DOT,  KC_4,    KC_5,    KC_6,    TO(BAS),
+        G(KC_LEFT), G(KC_DOWN), G(KC_UP), G(KC_RGHT), TO(BAS),      KC_GRV,  KC_7,    KC_8,    KC_9,    TO(BAS),
+        KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VIM,       KC_DOT,  KC_4,    KC_5,    KC_6,    KC_BSLS,
         A(KC_LEFT), A(KC_DOWN), A(KC_UP), A(KC_RGHT), TO(BAS),      TO(BAS), KC_1,    KC_2,    KC_3,    TO(BAS),
-                 TO(BAS), TO(BAS),                                          KC_0,    TO(BAS),
-                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      KC_NAV,                    KC_BSPC,
-                                   KC_SYM,  TO(BAS),               TO(BAS), KC_ENT
+                 KC_RBRC, TO(BAS),                                          KC_0,    TO(BAS),
+                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                    KC_BSPC,
+                                   _______, TO(BAS),               TO(BAS), KC_ENT
     ),
     [NAV] = LAYOUT(
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),
-        TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      TO(BAS), KC_GRV,  KC_TAB, TO(BAS), TO(BAS),
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), S(KC_LBRC), S(KC_RBRC), TO(BAS), TO(BAS),
+        QK_BOOT, TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_MPLY, KC_MNXT, TO(BAS), TO(BAS),
+        TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      KC_VOLU, G(KC_GRV), KC_APSW, TO(BAS), TO(BAS),
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_VOLD, S(G(KC_LBRC)), S(G(KC_RBRC)), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS), TO(BAS), TO(BAS),      _______,                   TO(BAS),
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
@@ -121,15 +121,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static bool is_dragging = false;
-    static uint16_t last_key = 0;
     switch (keycode) {
-        case KC_SYM:
-        if (record->event.pressed) {
-            layer_invert(SYM);
-        } else if (last_key != KC_SYM) {
-            layer_off(SYM);
-        }
-        break;
         case KC_CDCL:
         if (record->event.pressed) {
             register_code(KC_LCMD);
@@ -175,14 +167,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             pointing_device_set_cpi(is_scrolling ? 100 : PMW33XX_CPI);
         }
         break;
+        case KC_NAV:
+        if (record->event.pressed) {
+            layer_on(NAV);
+        } else {
+            layer_off(NAV);
+            unregister_code(KC_LGUI);
+        }
+        break;
+        case KC_APSW:
+        if (record->event.pressed) {
+            register_code(KC_LGUI);
+            register_code(KC_TAB);
+        } else {
+            unregister_code(KC_TAB);
+        }
+        break;
     }
     if (layer_state_is(MOU)) {
         if (keymaps[MOU][record->event.key.row][record->event.key.col] == KC_TRNS) {
             layer_off(MOU);
         }
-    }
-    if (record->event.pressed) {
-        last_key = keycode;
     }
     return true;
 }
