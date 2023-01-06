@@ -62,12 +62,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VIM,       KC_DOT,  KC_4,    KC_5,    KC_6,    KC_BSLS,
         A(KC_LEFT), A(KC_DOWN), A(KC_UP), A(KC_RGHT), TO(BAS),      TO(BAS), KC_1,    KC_2,    KC_3,    TO(BAS),
                  KC_RBRC, TO(BAS),                                          KC_0,    TO(BAS),
-                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                    KC_BSPC,
+                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                    KC_DEL,
                                    _______, TO(BAS),               TO(BAS), KC_ENT
     ),
     [NAV] = LAYOUT(
         QK_BOOT, TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_MPLY, KC_MNXT, TO(BAS), TO(BAS),
-        TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      KC_VOLU, G(KC_GRV), KC_APSW, TO(BAS), TO(BAS),
+        TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      KC_VOLU, G(KC_GRV), KC_APSW, KC_BACK, KC_FRWD,
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_VOLD, S(G(KC_LBRC)), S(G(KC_RBRC)), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS), TO(BAS), TO(BAS),      _______,                   TO(BAS),
