@@ -74,7 +74,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
     ),
     [MOU] = LAYOUT(
-        _______, _______, _______, _______, _______,      KC_SCST, KC_DRAG, KC_BACK, KC_FRWD, _______,
+        _______, _______, _______, _______, _______,      KC_SCST, KC_DRAG, _______, _______, _______,
         _______, _______, _______, _______, _______,      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
         _______, _______, _______, _______, _______,      KC_ALCL, KC_WH_U, KC_WH_D, _______, _______,
                  _______, _______,                                          _______, _______,
@@ -84,10 +84,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool is_scrolling = false;
+bool waiting_for_scroll = false;
+deferred_token mouse_clear_token = INVALID_DEFERRED_TOKEN;
 
 void keyboard_post_init_user(void) {
   debug_config.matrix = false;
   debug_config.mouse = false;
+}
+
+uint32_t clear_mouse(uint32_t trigger_time, void *cb_arg) {
+    layer_off(MOU);
+    return 0;
 }
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
@@ -95,26 +102,34 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static bool init = false;
     static int16_t scroll_buffer_x = 0;
     static int16_t scroll_buffer_y = 0;
-    if (init && has_mouse_report_changed(&mouse_report, &last) && !layer_state_is(MOU)) {
-        is_scrolling = false;
-        pointing_device_set_cpi(PMW33XX_CPI);
-        layer_on(MOU);
-    }
-    init = true;
+    bool changed = init && has_mouse_report_changed(&mouse_report, &last);
     last = mouse_report;
-    if (is_scrolling) {
-        scroll_buffer_x += mouse_report.x;
-        scroll_buffer_y += mouse_report.y;
-        if (abs(scroll_buffer_x) > 6) {
-            mouse_report.h = scroll_buffer_x > 0 ? 1 : -1;
-            scroll_buffer_x = 0;
+    init = true;
+    if (changed) {
+        if (!layer_state_is(MOU)) {
+            is_scrolling = false;
+            pointing_device_set_cpi(PMW33XX_CPI);
+            layer_on(MOU);
         }
-        if (abs(scroll_buffer_y) > 6) {
-            mouse_report.v = scroll_buffer_y > 0 ? -1 : 1;
-            scroll_buffer_y = 0;
+        if (is_scrolling) {
+            waiting_for_scroll = false;
+            scroll_buffer_x += mouse_report.x;
+            scroll_buffer_y += mouse_report.y;
+            if (abs(scroll_buffer_x) > 6) {
+                mouse_report.h = scroll_buffer_x > 0 ? 1 : -1;
+                scroll_buffer_x = 0;
+            }
+            if (abs(scroll_buffer_y) > 6) {
+                mouse_report.v = scroll_buffer_y > 0 ? -1 : 1;
+                scroll_buffer_y = 0;
+            }
+            mouse_report.x = 0;
+            mouse_report.y = 0;
         }
-        mouse_report.x = 0;
-        mouse_report.y = 0;
+        if (mouse_clear_token != INVALID_DEFERRED_TOKEN) {
+            cancel_deferred_exec(mouse_clear_token);
+            mouse_clear_token = INVALID_DEFERRED_TOKEN;
+        }
     }
     return mouse_report;
 }
@@ -164,7 +179,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_MSSC:
         if (record->event.pressed) {
             is_scrolling = !is_scrolling;
+            waiting_for_scroll = is_scrolling;
             pointing_device_set_cpi(is_scrolling ? 100 : PMW33XX_CPI);
+        } else {
+            if (!waiting_for_scroll) {
+                is_scrolling = false;
+                pointing_device_set_cpi(PMW33XX_CPI);
+            }
         }
         break;
         case KC_NAV:
@@ -188,6 +209,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (keymaps[MOU][record->event.key.row][record->event.key.col] == KC_TRNS) {
             layer_off(MOU);
         }
+    }
+    switch (keycode) {
+        case KC_BTN2:
+        case KC_CDCL:
+        case KC_ALCL:
+        break;
+        if (!record->event.pressed) {
+            layer_off(MOU);
+        }
+        case KC_BTN1:
+        if (!record->event.pressed) {
+            if (mouse_clear_token == INVALID_DEFERRED_TOKEN) {
+                mouse_clear_token = defer_exec(250, clear_mouse, NULL);
+            }
+        }
+        break;
     }
     return true;
 }
