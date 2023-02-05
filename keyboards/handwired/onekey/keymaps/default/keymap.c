@@ -47,6 +47,7 @@ enum custom_keycodes {
 #define KC_WN_R LOPT(LCMD(KC_RGHT))
 #define KC_WN_F LOPT(LCMD(KC_F))
 #define KC_VIM LCTL(KC_F)
+#define KC_EMJI LCTL(LCMD(KC_SPC))
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BAS] = LAYOUT(
@@ -60,15 +61,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [SYM] = LAYOUT(
         G(KC_LEFT), G(KC_DOWN), G(KC_UP), G(KC_RGHT), TO(BAS),      KC_GRV,  KC_7,    KC_8,    KC_9,    TO(BAS),
         KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VIM,       KC_DOT,  KC_4,    KC_5,    KC_6,    KC_BSLS,
-        A(KC_LEFT), A(KC_DOWN), A(KC_UP), A(KC_RGHT), TO(BAS),      TO(BAS), KC_1,    KC_2,    KC_3,    TO(BAS),
+        A(KC_LEFT), A(KC_DOWN), A(KC_UP), A(KC_RGHT), TO(BAS),      TO(BAS), KC_1,    KC_2,    KC_3,    KC_EMJI,
                  KC_RBRC, TO(BAS),                                          KC_0,    TO(BAS),
-                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                    KC_DEL,
+                 KC_LCMD, KC_SPC,  KC_LSFT, KC_LOPT,      TO(BAS),                    KC_BSPC,
                                    _______, TO(BAS),               TO(BAS), KC_ENT
     ),
     [NAV] = LAYOUT(
         QK_BOOT, TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_MPLY, KC_MNXT, TO(BAS), TO(BAS),
-        TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      KC_VOLU, G(KC_GRV), KC_APSW, KC_BACK, KC_FRWD,
-        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_VOLD, S(G(KC_LBRC)), S(G(KC_RBRC)), TO(BAS), TO(BAS),
+        TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      KC_WH_U, G(KC_GRV), KC_APSW, KC_BACK, KC_FRWD,
+        TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_WH_D, S(G(KC_LBRC)), S(G(KC_RBRC)), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS), TO(BAS), TO(BAS),      _______,                   TO(BAS),
                                    TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
@@ -76,7 +77,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MOU] = LAYOUT(
         _______, _______, _______, _______, _______,      KC_SCST, KC_DRAG, _______, _______, _______,
         _______, _______, _______, _______, _______,      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
-        _______, _______, _______, _______, _______,      KC_ALCL, KC_WH_U, KC_WH_D, _______, _______,
+        _______, _______, _______, _______, _______,      KC_ALCL, _______, _______, _______, _______,
                  _______, _______,                                          _______, _______,
                  _______, _______, _______, _______,      _______,                   _______,
                                    _______, _______,               _______, _______
@@ -94,6 +95,7 @@ void keyboard_post_init_user(void) {
 
 uint32_t clear_mouse(uint32_t trigger_time, void *cb_arg) {
     layer_off(MOU);
+    mouse_clear_token = INVALID_DEFERRED_TOKEN;
     return 0;
 }
 
@@ -102,7 +104,7 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     static bool init = false;
     static int16_t scroll_buffer_x = 0;
     static int16_t scroll_buffer_y = 0;
-    bool changed = init && has_mouse_report_changed(&mouse_report, &last);
+    bool changed = init && (mouse_report.x != last.x || mouse_report.y != last.y);
     last = mouse_report;
     init = true;
     if (changed) {
