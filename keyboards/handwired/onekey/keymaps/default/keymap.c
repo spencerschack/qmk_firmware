@@ -28,6 +28,7 @@ enum layers {
     SYM,
     NAV,
     MOU,
+    MDA,
     UTL
 };
 
@@ -67,12 +68,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                    _______, TO(BAS),               TO(BAS), KC_ENT
     ),
     [NAV] = LAYOUT(
-        QK_BOOT, TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), KC_MPLY, KC_MNXT, TO(BAS), TO(BAS),
+        QK_BOOT, TO(BAS), TO(BAS), TO(BAS), TO(BAS),      TO(BAS), _______, _______, TO(BAS), TO(BAS),
         TO(BAS), KC_WN_L, KC_WN_F, KC_WN_R, TO(BAS),      KC_WH_U, G(KC_GRV), KC_APSW, KC_BACK, KC_FRWD,
         TO(BAS), TO(BAS), TO(BAS), TO(BAS), TO(BAS),      KC_WH_D, S(G(KC_LBRC)), S(G(KC_RBRC)), TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS),                                          TO(BAS), TO(BAS),
                  TO(BAS), TO(BAS), TO(BAS), TO(BAS),      _______,                   TO(BAS),
-                                   TO(BAS), TO(BAS),               TO(BAS), TO(BAS)
+                                   TO(BAS), TO(BAS),               MO(MDA), TO(BAS)
+    ),
+    [MDA] = LAYOUT(
+        _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______,
+        _______, _______, _______, _______, _______,      _______, KC_VOLU, KC_MPLY, KC_MNXT, _______,
+        _______, _______, _______, _______, _______,      _______, KC_VOLD, _______, _______, _______,
+                 _______, _______,                                          _______, _______,
+                 _______, _______, _______, _______,      _______,                   _______,
+                                   _______, _______,               _______, _______
     ),
     [MOU] = LAYOUT(
         _______, _______, _______, _______, _______,      KC_SCST, KC_DRAG, _______, _______, _______,
