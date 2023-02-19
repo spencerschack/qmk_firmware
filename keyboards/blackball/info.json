@@ -2,7 +2,9 @@
     "keyboard_name": "Onekey RP2040",
     "processor": "RP2040",
     "bootloader": "rp2040",
-    "rgblight": {
-        "pin": "A1"
+    "usb": {
+        "vid": "0xFEED",
+        "pid": "0x6465",
+        "device_version": "0.0.1"
     }
 }

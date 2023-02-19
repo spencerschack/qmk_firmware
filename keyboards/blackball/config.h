@@ -5,6 +5,8 @@
 
 #include "config_common.h"
 
+#define DIODE_DIRECTION COL2ROW
+
 #define QMK_WAITING_TEST_BUSY_PIN GP28
 #define QMK_WAITING_TEST_YIELD_PIN GP29
 
