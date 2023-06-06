@@ -26,6 +26,7 @@ enum custom_keycodes {
 #define KC_WN_F LOPT(LCMD(KC_F))
 #define KC_VIM LCTL(KC_F)
 #define KC_EMJI LCTL(LCMD(KC_SPC))
+#define KC_SWAP LCTL(KC_T)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [BAS] = LAYOUT(
@@ -37,7 +38,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                    MO(SYM), KC_ESC,                KC_TAB,  KC_ENT
     ),
     [SYM] = LAYOUT(
-        G(KC_LEFT), G(KC_DOWN), G(KC_UP), G(KC_RGHT), TO(BAS),      KC_GRV,  KC_7,    KC_8,    KC_9,    TO(BAS),
+        G(KC_LEFT), G(KC_DOWN), G(KC_UP), G(KC_RGHT), KC_SWAP,     KC_GRV,  KC_7,    KC_8,    KC_9,    TO(BAS),
         KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_VIM,       KC_DOT,  KC_4,    KC_5,    KC_6,    KC_BSLS,
         A(KC_LEFT), A(KC_DOWN), A(KC_UP), A(KC_RGHT), TO(BAS),      TO(BAS), KC_1,    KC_2,    KC_3,    KC_EMJI,
                  KC_RBRC, TO(BAS),                                          KC_0,    TO(BAS),
@@ -54,8 +55,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [MDA] = LAYOUT(
         _______, _______, _______, _______, _______,      _______, _______, _______, _______, _______,
-        _______, _______, _______, _______, _______,      _______, KC_VOLU, KC_MPLY, KC_MNXT, _______,
-        _______, _______, _______, _______, _______,      _______, KC_VOLD, _______, _______, _______,
+        _______, _______, _______, _______, _______,      KC_BRIU, KC_VOLU, KC_MPLY, KC_MNXT, _______,
+        _______, _______, _______, _______, _______,      KC_BRID, KC_VOLD, _______, _______, _______,
                  _______, _______,                                          _______, _______,
                  _______, _______, _______, _______,      _______,                   _______,
                                    _______, _______,               _______, _______
@@ -130,6 +131,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             register_code(KC_LCMD);
         } else {
             tap_code(KC_BTN1);
+            wait_ms(1);
             unregister_code(KC_LCMD);
         }
         break;
@@ -138,6 +140,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             register_code(KC_LALT);
         } else {
             tap_code(KC_BTN1);
+            wait_ms(1);
             unregister_code(KC_LALT);
         }
         break;
