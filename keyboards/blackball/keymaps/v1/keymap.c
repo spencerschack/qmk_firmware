@@ -17,6 +17,7 @@ enum custom_keycodes {
     KC_SCST,
     KC_APSW,
     KC_NAV,
+    KC_COMT
 };
 
 #define KC_BACK LCMD(KC_LBRC)
@@ -62,7 +63,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                    _______, _______,               _______, _______
     ),
     [MOU] = LAYOUT(
-        _______, _______, _______, _______, _______,      KC_SCST, KC_DRAG, _______, _______, _______,
+        _______, _______, _______, _______, _______,      KC_SCST, KC_COMT, _______, _______, _______,
         _______, _______, _______, _______, _______,      KC_CDCL, KC_BTN1, KC_BTN2, KC_MSSC, TO(BAS),
         _______, _______, _______, _______, _______,      KC_ALCL, _______, _______, _______, _______,
                  _______, _______,                                          _______, _______,
@@ -157,9 +158,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_SCST:
         if (record->event.pressed) {
             tap_code16(LCTL(LSFT(LCMD(KC_4))));
-        } else {
-            is_dragging = true;
-            register_code(KC_BTN1);
         }
         break;
         case KC_BTN1:
@@ -193,6 +191,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             register_code(KC_TAB);
         } else {
             unregister_code(KC_TAB);
+        }
+        break;
+        case KC_COMT:
+        if (record->event.pressed) {
+            SEND_STRING(
+                SS_LCMD(" ")
+                SS_DELAY(10)
+                "digital color meter"
+                "\n"
+            );
+        } else {
+            SEND_STRING(
+                SS_LCMD(SS_LSFT("c"))
+                SS_LCMD("q")
+            );
+            layer_off(MOU);
         }
         break;
     }
