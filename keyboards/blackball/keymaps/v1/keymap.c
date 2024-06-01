@@ -76,6 +76,11 @@ bool is_scrolling = false;
 bool waiting_for_scroll = false;
 deferred_token mouse_clear_token = INVALID_DEFERRED_TOKEN;
 
+const uint16_t PROGMEM vim_combo[] = {KC_F, KC_J, COMBO_END};
+combo_t key_combos[] = {
+    COMBO(vim_combo, KC_VIM),
+};
+
 void keyboard_post_init_user(void) {
   debug_config.matrix = false;
   debug_config.mouse = false;
